@@ -18,10 +18,10 @@ public class FormataTexto
 		return Arrays.asList(documento.split(" "));
 	}
 	
-	public static JSONArray montarJson(String documento)
+	public static JSONArray montarJson(List<String> documentos)
 	{
 		List<Map<String,String>> conteudoJson = new ArrayList<Map<String,String>>();
-		Map<String,String> json;
+		Map<String,String> preparaJson = null;
 		
 		String inicioDOCNO = "<DOCNO>";
 		String fimDOCNO = "</DOCNO>";
@@ -32,26 +32,33 @@ public class FormataTexto
 		String inicioDATE = "<DATE>";
 		String fimDATE = "</DATE>";
 		
-		String inicioTEXT = "<TEXT>\n";
-		String fimTEXT = "\n</TEXT>";
+		String inicioTEXT = "<TEXT>";
+		String fimTEXT = "</TEXT>";
 
 		Pattern p = Pattern.compile(Pattern.quote(inicioDOCNO) + "(.*?)" + Pattern.quote(fimDOCNO) 
-									+ "\\s+.*?"+Pattern.quote(inicioDOCID) + "(.*?)" + Pattern.quote(fimDOCID)
-									+ "\\s+.*?"+Pattern.quote(inicioDATE) + "(.*?)" + Pattern.quote(fimDATE)
-									+ "\\s+.*?"+Pattern.quote(inicioTEXT) + "(.*?)" + Pattern.quote(fimTEXT));
-		Matcher m = p.matcher(documento);
-		
-		while (m.find())
-		{
-			json = new HashMap<>();
-			json.put("DOCNO",m.group(1));
-			json.put("DOCID",m.group(2));
-			json.put("DATE",m.group(3));
-			json.put("TEXT",formataTextoDocumento(m.group(4)).toString());
-			conteudoJson.add(json);
-		}
+									+ ".*?"+Pattern.quote(inicioDOCID) + "(.*?)" + Pattern.quote(fimDOCID)
+									+ ".*?"+Pattern.quote(inicioDATE) + "(.*?)" + Pattern.quote(fimDATE)
+									+ ".*?"+Pattern.quote(inicioTEXT) + "(.*?)" + Pattern.quote(fimTEXT));
 
-		JSONArray ja = new JSONArray(conteudoJson);
-		return ja;
+		
+		for (String documento : documentos)
+		{
+			Matcher m = p.matcher(documento);
+			
+			
+			while (m.find())
+			{
+				preparaJson = new HashMap<>();
+				preparaJson.put("DOCNO",m.group(1));
+				preparaJson.put("DOCID",m.group(2));
+				preparaJson.put("DATE",m.group(3));
+				preparaJson.put("TEXT",formataTextoDocumento(m.group(4)).toString());
+				conteudoJson.add(preparaJson);
+			}
+		}
+		
+		JSONArray saida = new JSONArray(conteudoJson);
+		
+		return saida;
 	}
 }
