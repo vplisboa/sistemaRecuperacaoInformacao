@@ -85,7 +85,6 @@ public class FormataTexto
 		}
 		
 		JSONArray saida = new JSONArray(conteudoJson);
-		
 		return saida;
 	}
 }

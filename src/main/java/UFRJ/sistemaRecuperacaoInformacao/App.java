@@ -1,6 +1,8 @@
 package UFRJ.sistemaRecuperacaoInformacao;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,43 +20,64 @@ public class App
 {
 	public static void main(String[] args) throws IOException, InterruptedException, ExecutionException
 	{
-		String arquivo = "/home/victor/Downloads/colecao_teste/FSP.940103.sgml";
-
+		popularElasticSearch();
+		popularConsultas();
+	}
+	
+	private static void popularConsultas() throws IOException
+	{
 		List<String> linhas = new ArrayList<>();
 		List<String> documentos = new ArrayList<>();
-
-		try (Stream<String> stream = Files.lines(Paths.get(arquivo), Charset.forName("ISO8859_1")))
+		try (Stream<String> stream = Files.lines(Paths.get("/home/victor/Downloads/consultas.txt"), Charset.forName("ISO8859_1")))
 		{
 			linhas = stream.collect(Collectors.toList());
-			System.out.println(linhas.size());
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-
-		StringBuilder documento = new StringBuilder();
-		for (String linha : linhas)
-		{
-			if (linha.equals("</DOC>"))
+			for (String linha : linhas)
 			{
-				documento.append(linha);
-				documentos.add(documento.toString());
-				documento = new StringBuilder();
-			}
-			else
-			{
-				documento.append(linha);
+				if (linha.contains("<PT-title>"))
+				{
+					documentos.add(linha.replace("<PT-title>", "").replace("</PT-title>", ""));
+				}
 			}
 		}
+	}
 
-		JSONArray ja = FormataTexto.montarJson(documentos);
+	private static void popularElasticSearch() throws IOException
+	{
+		File repositorio = new File("/home/victor/Downloads/colecao_teste");
 		
+		List<String> linhas = new ArrayList<>();
+		List<String> documentos = new ArrayList<>();
+		for(File arquivo : repositorio.listFiles())
+		{
+			try (Stream<String> stream = Files.lines(Paths.get(arquivo.getPath()), Charset.forName("ISO8859_1")))
+			{
+				linhas = stream.collect(Collectors.toList());
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+
+			StringBuilder documento = new StringBuilder();
+			for (String linha : linhas)
+			{
+				if (linha.equals("</DOC>"))
+				{
+					documento.append(linha);
+					documentos.add(documento.toString());
+					documento = new StringBuilder();
+				}
+				else
+				{
+					documento.append(linha);
+				}
+			}
+		}
+		
+		JSONArray ja = FormataTexto.montarJson(documentos);
 		ElasticSearchAction elasticSearchAction = new ElasticSearchAction();
 		
-		//ElasticSearchAction.adicionarIndice(ja);
-		//ElasticSearchAction.atualizarIndice(ja);
-		//ElasticSearchAction.deletarIndice("AWp0ei-j-NePops-Ed__");
+		elasticSearchAction.adicionarIndice(ja);
 		elasticSearchAction.realizarConsulta();
 	}
 }
