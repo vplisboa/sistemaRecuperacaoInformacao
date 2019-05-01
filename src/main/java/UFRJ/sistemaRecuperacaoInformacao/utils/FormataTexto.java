@@ -7,15 +7,42 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.json.JSONArray;
 
 public class FormataTexto
 {
 	
+	private static final String REGEX_SEPARAR_TOKENS = "[\\s\\.,!?]";
+	
 	public static List<String> formataTextoDocumento(String documento)
 	{
 		return Arrays.asList(documento.split(" "));
+	}
+	
+	public List<String> separarFraseEmListaPalavras(String frase)
+	{
+		List<String> stopWords = Stream.of("a","o","e","é","de","do","no","são").collect(Collectors.toList());
+		List<String> listaPalavras = Arrays.asList(frase.split(REGEX_SEPARAR_TOKENS));
+		List<String> saida = new ArrayList<>();
+		Boolean deveAdicionar = true;
+		for (String palavra : listaPalavras)
+		{
+			for (String stopWord : stopWords)
+			{
+				if(palavra.toLowerCase().equals(stopWord.toLowerCase()))
+				{
+					deveAdicionar = false;
+					break;
+				}
+				deveAdicionar = true;
+			}
+			if(deveAdicionar && !palavra.equals(""))
+				saida.add(palavra.toLowerCase());
+		}
+		return saida;
 	}
 	
 	public static JSONArray montarJson(List<String> documentos)
