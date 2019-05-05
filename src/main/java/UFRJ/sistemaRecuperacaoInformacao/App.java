@@ -2,7 +2,6 @@ package UFRJ.sistemaRecuperacaoInformacao;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -12,22 +11,45 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.elasticsearch.search.SearchHit;
 import org.json.JSONArray;
 
 import UFRJ.sistemaRecuperacaoInformacao.utils.FormataTexto;
 
 public class App
 {
+	private static ElasticSearchAction elasticSearchAction;
+	
 	public static void main(String[] args) throws IOException, InterruptedException, ExecutionException
 	{
+		elasticSearchAction = new ElasticSearchAction();
+		
 		popularElasticSearch();
-		popularConsultas();
+		List<String> consultas = popularConsultas();
+		
+		SearchHit[] resultadoConsulta;
+		System.out.println("realizando consulta");
+		int i = 1;
+		int j = 1;
+		for(String consulta : consultas)
+		{
+			resultadoConsulta = elasticSearchAction.realizarConsulta(consulta);
+			for(SearchHit hit : resultadoConsulta)
+			{
+				System.out.println(i + " Q0 "+ hit.getSource().get("DOCNO") +" " + j +" " + String.valueOf(hit.getScore()) + " victor_gustavo");
+				i++;
+			}
+			j++;
+			i=1;
+		}
+		
 	}
 	
-	private static void popularConsultas() throws IOException
+	private static List<String> popularConsultas() throws IOException
 	{
 		List<String> linhas = new ArrayList<>();
 		List<String> documentos = new ArrayList<>();
+		List<String> stopWords = Stream.of(" a "," o "," e "," é "," de "," do "," no "," são "," em "," na "," da ").collect(Collectors.toList());
 		try (Stream<String> stream = Files.lines(Paths.get("/home/victor/Downloads/consultas.txt"), Charset.forName("ISO8859_1")))
 		{
 			linhas = stream.collect(Collectors.toList());
@@ -35,10 +57,16 @@ public class App
 			{
 				if (linha.contains("<PT-title>"))
 				{
+					for(String stopWord : stopWords)
+					{
+						if(linha.contains(stopWord))
+							linha = linha.replace(stopWord, " ");
+					}
 					documentos.add(linha.replace("<PT-title>", "").replace("</PT-title>", ""));
 				}
 			}
 		}
+		return documentos;
 	}
 
 	private static void popularElasticSearch() throws IOException
@@ -75,9 +103,6 @@ public class App
 		}
 		
 		JSONArray ja = FormataTexto.montarJson(documentos);
-		ElasticSearchAction elasticSearchAction = new ElasticSearchAction();
-		
 		elasticSearchAction.adicionarIndice(ja);
-		elasticSearchAction.realizarConsulta();
 	}
 }

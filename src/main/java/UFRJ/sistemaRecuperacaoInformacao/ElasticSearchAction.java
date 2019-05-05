@@ -5,8 +5,6 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.search.SearchRequest;
@@ -45,6 +43,7 @@ public class ElasticSearchAction
 							.field("DATE", ja.getJSONObject(i).get("DATE"))
 							.field("TEXT", ja.getJSONObject(i).get("TEXT")).endObject())
 					.get();
+			System.out.println("Documento " + String.valueOf(i) + " adicionado");
 		}
 	}
 
@@ -68,22 +67,23 @@ public class ElasticSearchAction
 		client.prepareDelete("documento", "3", indice).get();
 	}
 
-	public void realizarConsulta()
+	public SearchHit[] realizarConsulta(String consulta)
 	{
-		Map<String, Object> template_params = new HashMap<>();
-		template_params.put("param_gender", "male");
-
 		SearchResponse sr = new SearchTemplateRequestBuilder(client)
 				.setScript("{\n" + "    \"query\": {\n" + "        \"multi_match\" : {\n"
-						+ "            \"query\" : \"ano\",\n" + "            \"fields\": [\"TEXT\"],\n"
+						+ "            \"query\" : \" "+ consulta +"\",\n" + "            \"fields\": [\"TEXT\"],\n"
 						+ "            \"fuzziness\": \"AUTO\"\n" + "        }\n" + "    },\n"
 						+ "    \"_source\": [\"DOCID\",\"DOCNO\",\"DATE\",\"TEXT\"],\n" + "    \"size\": 100\n" + "}")
 				.setScriptType(ScriptType.INLINE).setRequest(new SearchRequest()).get().getResponse();
 
 		SearchHit[] hits = sr.getHits().getHits();
+		
+		System.out.println("foram encontrados " + hits.length + " resultados");
 		System.out.println(hits[0].getScore());
 		System.out.println(hits[0].getSource().get("DOCID"));
 		System.out.println(hits[0].getSource().get("DOCNO"));
 		System.out.println(hits[0].getSource().get("TEXT"));
+		
+		return hits;
 	}
 }
