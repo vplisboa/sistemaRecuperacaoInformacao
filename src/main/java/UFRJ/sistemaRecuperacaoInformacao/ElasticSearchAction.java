@@ -70,10 +70,19 @@ public class ElasticSearchAction
 	public SearchHit[] realizarConsulta(String consulta)
 	{
 		SearchResponse sr = new SearchTemplateRequestBuilder(client)
-				.setScript("{\n" + "    \"query\": {\n" + "        \"multi_match\" : {\n"
-						+ "            \"query\" : \" "+ consulta +"\",\n" + "            \"fields\": [\"TEXT\"],\n"
-						+ "            \"fuzziness\": \"AUTO\"\n" + "        }\n" + "    },\n"
-						+ "    \"_source\": [\"DOCID\",\"DOCNO\",\"DATE\",\"TEXT\"],\n" + "    \"size\": 100\n" + "}")
+				.setScript("{\n" + 
+						"    \"query\": {\n" + 
+						"        \"match\" : {\n" + 
+						"            \"TEXT\" : {      \n" + 
+						"                \"query\":    \" " + consulta +"\",\n" + 
+						"                \"fuzziness\": \"AUTO\",\n" + 
+						"                \"operator\": \"and\"\n" + 
+						"            }\n" + 
+						"        }\n" + 
+						"    },\n" + 
+						"    \"_source\": [\"DOCID\",\"DOCNO\",\"DATE\",\"TEXT\"],\n" + 
+						"    \"size\": 100\n" + 
+						"}")
 				.setScriptType(ScriptType.INLINE).setRequest(new SearchRequest()).get().getResponse();
 
 		SearchHit[] hits = sr.getHits().getHits();
