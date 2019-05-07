@@ -1,7 +1,9 @@
 package UFRJ.sistemaRecuperacaoInformacao;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -29,8 +31,12 @@ public class App
 		
 		SearchHit[] resultadoConsulta;
 		System.out.println("realizando consulta");
-		int i = 1;
+		int i = 0;
 		int j = 1;
+		
+		FileWriter fileWriter = new FileWriter("resultado2.txt");
+	    PrintWriter printWriter = new PrintWriter(fileWriter);
+		
 		for(String consulta : consultas)
 		{
 			resultadoConsulta = elasticSearchAction.realizarConsulta(consulta);
@@ -38,10 +44,12 @@ public class App
 			{
 				System.out.println(i + " Q0 "+ hit.getSource().get("DOCNO") +" " + j +" " + String.valueOf(hit.getScore()) + " victor_gustavo");
 				i++;
+				printWriter.print(i + " Q0 "+ hit.getSource().get("DOCNO") +" " + j +" " + String.valueOf(hit.getScore()) + " victor_gustavo\n");
 			}
 			j++;
-			i=1;
+			i=0;
 		}
+		printWriter.close();
 		
 	}
 	
